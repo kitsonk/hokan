@@ -1,0 +1,35 @@
+{
+  "name": "hokan",
+  "description": "Local Storage for Dojo",
+  "version": "0.1.0",
+  "main": "main",
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "https://github.com/kitsonk/hokan/blob/master/LICENSE"
+    }
+  ],
+  "bugs": "https://github.com/kitsonk/hokan/issues",
+  "repositories": [{
+    "type": "git",
+    "url": "https://github.com/kitsonk/hokan.git"
+  }],
+  "keywords": [
+    "JavaScript",
+    "Dojo",
+    "Local Storage"
+  ],
+  "homepage": "https://github.com/kitsonk/hokan/",
+  "readmeFilename": "README.md",
+  "dojoBuild": "profile.js",
+  "dependencies": {
+    "dojo": ">1.7"
+  },
+  "icon": "https://raw.github.com/kitsonk/hokan/master/resources/hokan_icon.png",
+  "volo": {
+    "baseDir": "./src/",
+    "dependencies": {
+      "dojo": "github:dojo/dojo/>1.7"
+    }
+  }
+}
