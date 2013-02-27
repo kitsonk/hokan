@@ -33,7 +33,7 @@ define([
 		// name: String
 		//		The name of this store, which will be used to derive key names so that multiple stores can co-exist
 		//		together, with different names.
-		name: 'default',
+		name: '',
 
 		// indexKey: String
 		//		The name of the key for the "private" index of keys associated with this store
@@ -44,11 +44,23 @@ define([
 		index: null,
 
 		constructor: function (options) {
-			for (var i in options) {
-				this[i] = options[i];
+			var data;
+			for (var key in options) {
+				if (key === 'data') {
+					data = options[key];
+				}
+				else {
+					this[key] = options[key];
+				}
+			}
+			if (!this.name) {
+				this.name = util.getUUID();
 			}
 			var indexString = localStorage.getItem([this.name, this.indexKey].join('.'));
 			this.index = indexString ? JSON.parse(indexString) : {};
+			if (data) {
+				this.setData(data);
+			}
 		},
 
 		get: function (id) {
@@ -146,6 +158,22 @@ define([
 				data.push(JSON.parse(localStorage.getItem(this.index[key])));
 			}
 			return queryResults(this.queryEngine(query, options)(data));
+		},
+
+		setData: function (data) {
+			// summary:
+			//		Sets the given data as the source for this store, and indexes it
+			// data: Object||Object[]
+			//		An array of objects to use as the source of data.
+			if (data.items) {
+				// just for convenience with the data format IFRS expects
+				this.idProperty = data.identifier;
+				data = data.items;
+			}
+			this.clear();
+			for (var i = 0; i < data.length; i++) {
+				this.put(data[i]);
+			}
 		},
 
 		setIndex: function () {

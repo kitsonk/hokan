@@ -3,6 +3,8 @@
 **hokan** is a package of AMD modules that provide tools to work with persistent local storage.  In particular it
 provides a [Dojo Store API][store-api] interface to persistent local storage.
 
+compliant
+
 ## Requirements
 
 The modules provided here should work with [Dojo Core][core] 1.7 or later.
@@ -50,3 +52,4 @@ Unit tests require the [D.O.H.][doh] installed and are located in the `tests` pa
 [volo]: http://volojs.org/
 [npm]: http://npmjs.org/
 [doh]: http://dojotoolkit.org/reference-guide/1.8/util/doh.html
+[download]: /kitsonk/hokan/archive/master.zip
