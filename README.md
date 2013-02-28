@@ -7,7 +7,7 @@ compliant
 
 ## Requirements
 
-The modules provided here should work with [Dojo Core][core] 1.7 or later.
+The modules provided here should work with [Dojo Core][core] 1.8 or later.
 
 ## License
 
@@ -39,7 +39,9 @@ $ npm install hokan
 
 Please refer to the documentation for each of the modules for specifics of their usage:
 
-* [LocalStorage](docs/LocalStorage.md) - An Dojo Store API interface to DOM Storage's localStorage
+* [LocalStorage](docs/LocalStorage.md) - A Dojo Store API interface to DOM Storage's localStorage
+* [IndexedDB](docs/IndexedDB.md) - A Dojo Store API interface to IndexedDB
+* [idbQueryEngine](docs/idbQueryEngine.md) - A Dojo Store API query engine that supports querying IndexedDB cursors
 * [util](docs/util.md) - Utility functions for *hokan*
 
 ## Testing
