@@ -390,8 +390,10 @@ define([
 				dfd.reject(event);
 			};
 			transaction.oncomplete = function () {
-				self.emit('putdata', ids);
-				dfd.resolve(ids);
+				setTimeout(function () {
+					self.emit('putdata', ids);
+					dfd.resolve(ids);
+				}, 0);
 			};
 
 			var objectStore = transaction.objectStore(this.name);
@@ -428,8 +430,10 @@ define([
 				dfd.reject(event);
 			};
 			transaction.oncomplete = function () {
-				self.emit('putdata', ids);
-				dfd.resolve(ids);
+				setTimeout(function () {
+					self.emit('adddata', ids);
+					dfd.resolve(ids);
+				}, 0);
 			};
 
 			var objectStore = transaction.objectStore(this.name);
