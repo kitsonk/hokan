@@ -11,21 +11,19 @@ define([
 
 	doh.register('tests.IndexedDB', [
 		{
-			name: 'setup',
+			name: 'setData/putData',
 			runTest: function (t) {
 				var td = new doh.Deferred();
 				when(storage.ready).then(function () {
-					storage.clear().then(function () {
-						var puts = [];
-						puts.push(storage.put({id: 1, name: 'one', prime: false, mappedTo: 'E'}));
-						puts.push(storage.put({id: 2, name: 'two', even: true, prime: true, mappedTo: 'D'}));
-						puts.push(storage.put({id: 3, name: 'three', prime: true, mappedTo: 'C'}));
-						puts.push(storage.put({id: 4, name: 'four', even: true, prime: false, mappedTo: null}));
-						puts.push(storage.put({id: 5, name: 'five', prime: true, mappedTo: 'A'}));
-						all(puts).then(td.getTestCallback(function (ids) {
-							t.is(ids, [ 1, 2, 3, 4, 5 ]);
-						}));
-					});
+					storage.setData([
+						{id: 1, name: 'one', prime: false, mappedTo: 'E'},
+						{id: 2, name: 'two', even: true, prime: true, mappedTo: 'D'},
+						{id: 3, name: 'three', prime: true, mappedTo: 'C'},
+						{id: 4, name: 'four', even: true, prime: false, mappedTo: null},
+						{id: 5, name: 'five', prime: true, mappedTo: 'A'}
+					]).then(td.getTestCallback(function (ids) {
+						t.is(ids, [ 1, 2, 3, 4, 5 ]);
+					}));
 				});
 				return td;
 			}

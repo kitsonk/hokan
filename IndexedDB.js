@@ -1,4 +1,5 @@
 define([
+	'dojo/_base/array',
 	'dojo/_base/declare', // declare
 	'dojo/_base/lang', // lang.hitch
 	'dojo/Deferred',
@@ -7,7 +8,7 @@ define([
 	'dojo/when',
 	'./idbQueryEngine',
 	'./util'
-], function (declare, lang, Deferred, Evented, queryResults, when, idbQueryEngine, util) {
+], function (array, declare, lang, Deferred, Evented, queryResults, when, idbQueryEngine, util) {
 
 	var idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
@@ -97,15 +98,15 @@ define([
 			//		The object in the store that matches the given id.
 
 			var self = this,
-				dfd = new Deferred(),
-				request = this.db.transaction([ this.name ]).objectStore(this.name).get(id);
-
+				dfd = new Deferred();
+			
+			var request = this.db.transaction(this.name).objectStore(this.name).get(id);
 			request.onerror = function (event) {
 				self.emit('error', event);
 				dfd.reject(event);
 			};
-			request.onsuccess = function () {
-				dfd.resolve(request.result);
+			request.onsuccess = function (event) {
+				dfd.resolve(event.target.result);
 			};
 
 			return dfd.promise;
@@ -132,19 +133,24 @@ define([
 
 			var self = this,
 				dfd = new Deferred(),
-				transaction = this.db.transaction([ this.name ], 'readwrite'),
 				idProperty = this.idProperty;
 			
 			object[idProperty] = (directives && 'id' in directives) ? directives.id :
 				idProperty in object ? object[idProperty] : util.getUUID();
 
+			var transaction = this.db.transaction([ this.name ], 'readwrite');
 			transaction.onerror = function (event) {
 				self.emit('error', event);
 				dfd.reject(event);
 			};
 
 			transaction.objectStore(this.name).put(object).onsuccess = function (event) {
-				dfd.resolve(event.target.result);
+				// resolution of the promise in the same event loop can cause subsequent reads to receive the previous
+				// version of the data (at least in some versions of Chrome) and until Dojo has Promises A+ we have to
+				// frig it.
+				setTimeout(function () {
+					dfd.resolve(event.target.result);
+				}, 0);
 			};
 
 			return dfd.promise;
@@ -162,7 +168,6 @@ define([
 			// TODO .add() and .put() could be re-factored into a single function
 			var self = this,
 				dfd = new Deferred(),
-				transaction = this.db.transaction([ this.name ], 'readwrite'),
 				idProperty = this.idProperty;
 
 			// While it might be possible to use a key generator, most implementations of the key generator do not
@@ -171,13 +176,19 @@ define([
 			object[idProperty] = (directives && 'id' in directives) ? directives.id :
 				idProperty in object ? object[idProperty] : util.getUUID();
 
+			var transaction = this.db.transaction([ this.name ], 'readwrite');
 			transaction.onerror = function (event) {
 				self.emit('error', event);
 				dfd.reject(event);
 			};
 
 			transaction.objectStore(this.name).add(object).onsuccess = function (event) {
-				dfd.resolve(event.target.result);
+				// resolution of the promise in the same event loop can cause subsequent reads to receive the previous
+				// version of the data (at least in some versions of Chrome) and until Dojo has Promises A+ we have to
+				// frig it.
+				setTimeout(function () {
+					dfd.resolve(event.target.result);
+				}, 0);
 			};
 
 			return dfd.promise;
@@ -193,13 +204,18 @@ define([
 				dfd = new Deferred();
 
 			var request = this.db.transaction([ this.name ], 'readwrite').objectStore(this.name).delete(id);
-			request.onsuccess = function (event) {
-				self.emit('remove', event);
-				dfd.resolve(event);
-			};
 			request.onerror = function (event) {
 				self.emit('error', event);
 				dfd.resolve(event);
+			};
+			request.onsuccess = function (event) {
+				// resolution of the promise in the same event loop can cause subsequent reads to receive the previous
+				// version of the data (at least in some versions of Chrome) and until Dojo has Promises A+ we have to
+				// frig it.
+				setTimeout(function () {
+					self.emit('remove', event);
+					dfd.resolve(event);
+				});
 			};
 
 			return dfd.promise;
@@ -285,8 +301,9 @@ define([
 			//		A promise that is fulfilled with the IDBTransaction event relating to the clear
 
 			var self = this,
-				dfd = new Deferred(),
-				request = this.db.transaction(this.name, 'readwrite').objectStore(this.name).clear();
+				dfd = new Deferred();
+
+			var request = this.db.transaction(this.name, 'readwrite').objectStore(this.name).clear();
 			request.onsuccess = function (event) {
 				self.emit('clear', event);
 				dfd.resolve(event);
@@ -353,6 +370,94 @@ define([
 			};
 
 			return dfd.promise;
+		},
+
+		putData: function (data) {
+			// summary:
+			//		A convenience function that allows a "bulk" put of data in a single transaction to the object store.
+			//		Any missing IDs will be generated and any duplicate IDs will be overwritten.
+			// data: Object[]
+			//		The array of objects to put in the store
+
+			var self = this,
+				dfd = new Deferred(),
+				ids = [],
+				idProperty = this.idProperty;
+
+			var transaction = this.db.transaction([ this.name ], 'readwrite');
+			transaction.onerror = function (event) {
+				self.emit('error', event);
+				dfd.reject(event);
+			};
+			transaction.oncomplete = function () {
+				self.emit('putdata', ids);
+				dfd.resolve(ids);
+			};
+
+			var objectStore = transaction.objectStore(this.name);
+
+			var i, object;
+			for (i = 0; i < data.length; i++) {
+				object = data[i];
+				// While it might be possible to use a key generator, most implementations of the key generator do not
+				// generate UUIDs.  If the store is used in an "offline" situation, unique id's may not be generated,
+				// therefore it is better, if the ID is not supplied, to generate a UUID instead.
+				ids.push(object[idProperty] = idProperty in object ? object[idProperty] : util.getUUID());
+				objectStore.put(object);
+			}
+
+			return dfd.promise;
+		},
+
+		addData: function (data) {
+			// summary:
+			//		A convenience function that allows a "bulk" add of data in a single transaction to the object store.
+			//		Any missing IDs will be generated and any duplicated IDs will throw an exception.
+			// data: Object[]
+			//		The array of objects to add to the store
+
+			// TODO: merge with putData
+			var self = this,
+				dfd = new Deferred(),
+				ids = [],
+				idProperty = this.idProperty;
+
+			var transaction = this.db.transaction([ this.name ], 'readwrite');
+			transaction.onerror = function (event) {
+				self.emit('error', event);
+				dfd.reject(event);
+			};
+			transaction.oncomplete = function () {
+				self.emit('putdata', ids);
+				dfd.resolve(ids);
+			};
+
+			var objectStore = transaction.objectStore(this.name);
+
+			var i, object;
+			for (i = 0; i < data.length; i++) {
+				object = data[i];
+				// While it might be possible to use a key generator, most implementations of the key generator do not
+				// generate UUIDs.  If the store is used in an "offline" situation, unique id's may not be generated,
+				// therefore it is better, if the ID is not supplied, to generate a UUID instead.
+				ids.push(object[idProperty] = idProperty in object ? object[idProperty] : util.getUUID());
+				objectStore.add(object);
+			}
+
+			return dfd.promise;
+		},
+
+		setData: function (data) {
+			// summary:
+			//		A convenience function that allows the data in the store to be replaced with the array of data in
+			//		a single transaction.
+			// data: Object[]
+			//		The array of objects to replace the data in the store
+
+			var self = this;
+			return this.clear().then(function () {
+				return self.putData(data);
+			});
 		},
 
 		_onUpgradeNeeded: function (event) {
