@@ -1,5 +1,4 @@
 define([
-	'dojo/_base/array',
 	'dojo/_base/declare', // declare
 	'dojo/_base/lang', // lang.hitch
 	'dojo/Deferred',
@@ -8,7 +7,7 @@ define([
 	'dojo/when',
 	'./idbQueryEngine',
 	'./util'
-], function (array, declare, lang, Deferred, Evented, queryResults, when, idbQueryEngine, util) {
+], function (declare, lang, Deferred, Evented, queryResults, when, idbQueryEngine, util) {
 
 	var idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
