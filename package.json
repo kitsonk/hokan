@@ -9,6 +9,11 @@
       "url": "https://github.com/kitsonk/hokan/blob/master/LICENSE"
     }
   ],
+  "maintainers": [{
+    "name": "Kitson Kelly",
+    "email": "dojo@kitsonkelly.com",
+    "web": "http://www.kitsonkelly.com/"
+  }],
   "bugs": "https://github.com/kitsonk/hokan/issues",
   "repositories": [{
     "type": "git",
