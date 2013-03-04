@@ -3,7 +3,7 @@ var profile = (function () {
 
 		copyOnly = function (filename, mid) {
 			var list = {
-				'hokan/profile': 1,
+				'hokan/package': 1,
 				'hokan/package.json': 1,
 				'hokan/tests': 1,
 				'hokan/test': 1

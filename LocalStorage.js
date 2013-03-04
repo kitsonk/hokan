@@ -3,7 +3,7 @@ define([
 	'dojo/json',
 	'dojo/store/util/QueryResults',
 	'dojo/store/util/SimpleQueryEngine',
-	'./util'
+	'./util/main'
 ], function (declare, JSON, queryResults, simpleQueryEngine, util) {
 
 	var localStorage = window.localStorage;

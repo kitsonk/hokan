@@ -5,8 +5,8 @@ define([
 	'dojo/Evented',
 	'dojo/store/util/QueryResults',
 	'dojo/when',
-	'./idbQueryEngine',
-	'./util'
+	'./util/idbQueryEngine',
+	'./util/main'
 ], function (declare, lang, Deferred, Evented, queryResults, when, idbQueryEngine, util) {
 
 	var idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
