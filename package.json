@@ -25,7 +25,7 @@
   "dependencies": {
     "dojo": ">1.7"
   },
-  "icon": "https://raw.github.com/kitsonk/hokan/master/resources/hokan_icon.png",
+  "icon": "https://raw.github.com/kitsonk/hokan/master/resources/hokan_64.png",
   "volo": {
     "baseDir": "./src/",
     "dependencies": {
