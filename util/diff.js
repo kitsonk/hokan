@@ -3,6 +3,13 @@ define([
 ], function (array) {
 
 	function isObjectEmpty(O) {
+		// summary:
+		//		Detects if an Object is "empty" in that it has no enumerable own keys.
+		// O: Object
+		//		The Object to insect
+		// returns: Boolean
+		//		Returns `false` if it is not empty or `true` if it is
+
 		for (var key in O) {
 			if (O.hasOwnProperty(key)) {
 				return false;
@@ -12,6 +19,20 @@ define([
 	}
 
 	function simpleArrayDiff(a, b) {
+		// summary:
+		//		Compares two array that should only contain primitives.  It returns the difference between the two
+		//		arrays or `undefined` if there is no difference.  The comparison looks for presence of the primitive
+		//		and does not care about the order.  If there are differences, an Array is returned.  It will contain
+		//		one or two arguments that are Objects that contain the values either added or deleted when compared
+		//		to the second array.
+		// a: Array
+		//		The array to serve as the baseline
+		// b: Array
+		//		The array to to serve as the comparison.  If items are present in this array that aren't in array `a`
+		//		they will be returned as `{ type: 'add', value: [...] }` and items present in `a` but not present in this
+		//		array will be returned as `{ type: 'delete', value: [...] }`
+		// returns: [ Object... ] || undefined
+
 		var del = array.filter(a, function (i) {
 			return !~b.indexOf(i);
 		});
@@ -38,7 +59,15 @@ define([
 		// summary:
 		//		This compares two arrays and returns the difference when the arrays contain non-primitives.  Because
 		//		of the complexity of non-primitives, the assumption is made that elements of the array appear in the
-		//		same order.  The array returned will be a sparse array.
+		//		same order.  The array returned will be a sparse array, with only the elements of the array that are
+		//		different.
+		// a: Array
+		//		The array to serve as the baseline.
+		// b: Array
+		//		The array to serve as the comparison.
+		// returns: Array || undefined
+		//		The array of the changes
+
 		var iDiff, bValue, d = [];
 		array.forEach(a, function (aValue, idx) {
 			if (idx < b.length) {
@@ -80,6 +109,19 @@ define([
 	}
 
 	function arrayDiff(a, b) {
+		// summary:
+		//		Compares two arrays and returns the difference.  It handles primitive only arrays or arrays that contain
+		//		non-primitives differently.  Primitive only arrays return either `undefined` or an array with one or two
+		//		elements which represent that differences between arrays.  If an array contains a non-primitive, it
+		//		compares the elements in the array in the order they appear in the array, returning any elements that
+		//		differ.
+		// a: Array
+		//		The array that serves as baseline.
+		// b: Array
+		//		The array to serve as the comparison.
+		// returns: Array || undefined
+		//		The array of changes.
+
 		if (b === undefined) {
 			return {
 				type: 'delete'
@@ -101,6 +143,46 @@ define([
 	}
 
 	function objectDiff(a, b) {
+		// summary:
+		//		Provide a difference between two objects, where any key of the object are returned with information
+		//		on how they changed, with a `type` of: 'delete', 'change' or 'add' and `value` that represents that
+		//		new value, which can in turn be another object difference.  This does a deep comparison, where if the
+		//		a property !== compared property, it will introspect both values and compare them.
+		// a: Object
+		//		The object that serves as baseline.
+		// b: Object
+		//		The object to serve as the comparison.
+		// returns: Object || undefined
+		//		The object of changes, or undefined if none.
+
+		function diffValues(aValue, bValue) {
+			var dKey;
+			if (aValue !== bValue) {
+				if (bValue === undefined) {
+					dKey = {
+						type: 'delete'
+					};
+				}
+				else if (aValue !== null && typeof aValue === 'object') {
+					// typeof null === 'object', but want to treat as primitive
+					var dValue = diff(aValue, bValue);
+					if (dValue !== undefined) {
+						dKey = {
+							type: 'change',
+							value: dValue
+						};
+					}
+				}
+				else {
+					dKey = {
+						type: 'change',
+						value: bValue
+					};
+				}
+			}
+			return dKey;
+		}
+
 		if (b === undefined) {
 			return {
 				type: 'delete'
@@ -112,7 +194,7 @@ define([
 				value: b
 			};
 		}
-		var key, aValue, bValue, dValue, d = {};
+		var key, dValue, d = {};
 		for (key in a) {
 			if (a.hasOwnProperty(key)) {
 				if (!(key in b)) {
@@ -121,36 +203,15 @@ define([
 					};
 				}
 				else {
-					aValue = a[key];
-					bValue = b[key];
-					if (aValue !== bValue) {
-						if (bValue === undefined) {
-							d[key] = {
-								type: 'delete'
-							};
-						}
-						else if (aValue !== null && typeof aValue === 'object') {
-							// typeof null === 'object', but want to treat as primitive
-							dValue = diff(aValue, bValue);
-							if (dValue !== undefined) {
-								d[key] = {
-									type: 'change',
-									value: dValue
-								};
-							}
-						}
-						else {
-							d[key] = {
-								type: 'change',
-								value: bValue
-							};
-						}
+					dValue = diffValues(a[key], b[key]);
+					if (dValue) {
+						d[key] = dValue;
 					}
 				}
 			}
 		}
 		for (key in b) {
-			if (!(key in a)) {
+			if (b.hasOwnProperty(key) && !(key in a)) {
 				d[key] = {
 					type: 'add',
 					value: b[key]
@@ -161,6 +222,15 @@ define([
 	}
 
 	function diff(a, b) {
+		// summary:
+		//		Compare two arguments, returning the differences between the two.
+		// a: Any
+		//		The item that serves as baseline
+		// b: Any
+		//		The item that is used for comparison
+		// returns: Object || Array || undefined
+		//		Returns `undefined` if there is no difference between the two arguments
+
 		if (a === undefined) {
 			if (b === a) {
 				return undefined;
